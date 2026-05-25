@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spanisch B2 Quiz – Kahootstil</title>
+<style>
+:root{
+ --bg1:#581c87;
+ --bg2:#0891b2;
+ --dark:#111827;
+ --muted:#64748b;
+ --accent:#9333ea;
+}
+*{box-sizing:border-box}
+body{
+ margin:0;
+ min-height:100vh;
+ font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+ background:linear-gradient(135deg,var(--bg1),var(--bg2));
+ color:#172033;
+}
+.app{max-width:1100px;margin:0 auto;padding:18px}
+.screen{
+ background:rgba(255,255,255,.97);
+ border-radius:28px;
+ padding:28px;
+ margin:20px 0;
+ box-shadow:0 24px 60px rgba(0,0,0,.28);
+}
+h1{margin-top:0;font-size:2.2rem}
+.subtitle{font-size:1.08rem;line-height:1.5;color:var(--muted)}
+.btn{
+ border:0;border-radius:18px;padding:14px 20px;font-size:1rem;font-weight:900;
+ cursor:pointer;background:var(--dark);color:white;
+}
+.btn.secondary{background:#e5e7eb;color:#111827}
+.topbar{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+.pill{background:#f3e8ff;color:#6b21a8;padding:8px 14px;border-radius:999px;font-weight:900}
+.progress{height:14px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:18px 0}
+.bar{height:100%;width:0%;background:linear-gradient(90deg,#22c55e,#facc15,#ef4444)}
+.task{display:inline-block;background:var(--accent);color:white;padding:7px 12px;border-radius:999px;font-weight:900;margin-bottom:10px}
+.question{font-size:1.42rem;font-weight:950;line-height:1.34;margin:14px 0 18px}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.answer{
+ border:0;border-radius:22px;min-height:86px;padding:16px;color:white;font-weight:900;
+ font-size:1.02rem;text-align:left;cursor:pointer;
+}
+.answer:nth-child(1){background:#e11d48}.answer:nth-child(2){background:#2563eb}
+.answer:nth-child(3){background:#16a34a}.answer:nth-child(4){background:#f59e0b}
+textarea,input{
+ width:100%;border:3px solid #e5e7eb;border-radius:18px;padding:14px;
+ font-size:1.05rem;margin:10px 0 12px;
+}
+textarea{min-height:155px}
+.feedback{display:none;margin-top:18px;padding:16px;border-radius:18px;font-weight:800}
+.feedback.good{display:block;background:#dcfce7;color:#166534}
+.feedback.bad{display:block;background:#fee2e2;color:#991b1b}
+.feedback.neutral{display:block;background:#fef9c3;color:#854d0e}
+.imagebox{
+ background:linear-gradient(135deg,#fff7ed,#e0f2fe);
+ border-radius:26px;min-height:230px;display:flex;align-items:center;justify-content:center;
+ margin-bottom:18px;border:4px solid white;text-align:center;
+}
+.scene{font-size:4.6rem}.caption{margin-top:10px;color:var(--muted);font-weight:700}
+.info{
+ background:#f8fafc;border-radius:18px;padding:14px;margin:12px 0;color:#334155;
+ line-height:1.55;border-left:6px solid #a78bfa;
+}
+.hidden{display:none}
+.reviewitem{
+ background:#f9fafb;border-left:6px solid #a78bfa;border-radius:16px;
+ padding:14px;margin:10px 0;text-align:left
+}
+.bigscore{font-size:4rem;font-weight:1000;color:#7c3aed}
+@media(max-width:700px){
+ .answers{grid-template-columns:1fr}
+ .screen{padding:18px}
+ .question{font-size:1.2rem}
+ .scene{font-size:3.2rem}
+ h1{font-size:1.55rem}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<section id="start" class="screen">
+<h1>🇪🇸 Spanisch B2 Quiz – Kahootstil</h1>
+<p class="subtitle">
+40 anspruchsvolle Aufgaben für B2: differenzierte Meinungen, Debatte, Hypothesen,
+subjuntivo, condicional compuesto, Medien, Gesellschaft, Nuancen, idiomatische Wendungen,
+Leseverstehen und freie Produktion.
+</p>
+<p><b>Hinweis:</b> Bei B2 sind offene Aufgaben besonders wichtig. Die Musterlösungen sind Beispiele, nicht die einzig richtigen Antworten.</p>
+<button class="btn" onclick="startQuiz()">Quiz starten</button>
+</section>
+
+<section id="quiz" class="screen hidden">
+<div class="topbar">
+<div class="pill" id="counter"></div>
+<div class="pill">Punkte: <span id="score">0</span></div>
+</div>
+<div class="progress"><div class="bar" id="bar"></div></div>
+
+<div id="task" class="task"></div>
+<div id="image" class="imagebox hidden"></div>
+<div id="info" class="info hidden"></div>
+<div id="question" class="question"></div>
+<div id="content"></div>
+<div id="feedback" class="feedback"></div>
+
+<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap">
+<button class="btn secondary" onclick="showAnswer()">Lösung zeigen</button>
+<button class="btn" onclick="nextQuestion()">Weiter</button>
+</div>
+</section>
+
+<section id="result" class="screen hidden" style="text-align:center">
+<h1>🎉 Ergebnis</h1>
+<div class="bigscore"><span id="finalScore"></span> / 40</div>
+<p id="resultText" class="subtitle"></p>
+<button class="btn" onclick="restartQuiz()">Noch einmal spielen</button>
+<div id="review"></div>
+</section>
+
+</div>
+
+<script>
+const questions = [
+{type:"Debatte",mode:"mc",q:"Welche Formulierung klingt am differenziertesten?",options:[
+"Si bien es cierto que la tecnología facilita la vida, también puede generar dependencia.",
+"La tecnología buena y mala.",
+"Yo tecnología siempre sí.",
+"No me importa nada."
+],correct:0,note:"B2: abwägende Struktur mit si bien es cierto que..."},
+
+{type:"Debatte",mode:"text",q:"Schreibe 3–4 Sätze: Sollten Schüler Smartphones im Unterricht benutzen dürfen?",a:"Depende del uso. Por un lado, los móviles pueden servir para buscar información rápidamente. Por otro lado, también pueden distraer mucho. En mi opinión, deberían permitirse solo en actividades concretas.",note:"Musterlösung."},
+
+{type:"Debatte",mode:"mc",q:"Welche Struktur eignet sich, um ein Gegenargument einzuleiten?",options:[
+"No obstante, hay que tener en cuenta que...",
+"Porque sí.",
+"Y ya está.",
+"Me gusta mucho."
+],correct:0,note:"No obstante... leitet einen Gegensatz ein."},
+
+{type:"Debatte",mode:"text",q:"Formuliere einen höflichen Widerspruch zu: 'Aprender idiomas con aplicaciones es suficiente.'",a:"No estoy del todo de acuerdo, ya que las aplicaciones pueden ayudar, pero no sustituyen una conversación real.",note:"Musterlösung."},
+
+{type:"Subjuntivo avanzado",mode:"mc",q:"Welche Form passt? No es que no me _____ la idea, sino que necesito más tiempo.",options:[
+"gusta","gustara","guste","gustó"
+],correct:2,note:"No es que + subjuntivo."},
+
+{type:"Subjuntivo avanzado",mode:"mc",q:"Welche Form passt? Te lo digo para que no _____ el mismo error.",options:[
+"cometes","cometas","cometiste","cometer"
+],correct:1,note:"para que + subjuntivo."},
+
+{type:"Subjuntivo avanzado",mode:"fill",q:"Completa: Aunque _____ difícil, quiero intentarlo. (ser)",a:"sea",note:"Aunque + subjuntivo, wenn es als hypothetisch/offen dargestellt wird."},
+
+{type:"Subjuntivo avanzado",mode:"text",q:"Schreibe einen Satz mit 'a menos que...'",a:"Iremos a la playa a menos que llueva.",note:"Musterlösung: a menos que + subjuntivo."},
+
+{type:"Condicional & Hypothesen",mode:"mc",q:"Welche Form passt? Si hubiera tenido más tiempo, _____ mejor el examen.",options:[
+"prepararía","habría preparado","preparé","he preparado"
+],correct:1,note:"Irreale Bedingung in der Vergangenheit: pluscuamperfecto de subjuntivo + condicional compuesto."},
+
+{type:"Condicional & Hypothesen",mode:"fill",q:"Completa: Si yo fuera tú, no lo _____. (hacer)",a:"haría",note:"Si yo fuera tú + condicional."},
+
+{type:"Condicional & Hypothesen",mode:"text",q:"Bilde einen Satz mit: Si hubiera sabido..., habría...",a:"Si hubiera sabido la verdad, habría actuado de otra manera.",note:"Musterlösung."},
+
+{type:"Condicional & Hypothesen",mode:"mc",q:"Welche Bedeutung hat: 'Habría sido mejor avisar antes'?",options:[
+"Es wäre besser gewesen, vorher Bescheid zu sagen.",
+"Es wird besser sein, vorher Bescheid zu sagen.",
+"Es war immer besser.",
+"Es ist verboten, vorher Bescheid zu sagen."
+],correct:0,note:"condicional compuesto = wäre ... gewesen."},
+
+{type:"Leseverstehen",mode:"mc",info:"Texto: En muchas ciudades se están reduciendo los espacios para coches con el fin de fomentar el uso de bicicletas y transporte público. Sus defensores argumentan que mejora la calidad del aire, mientras que sus críticos señalan que puede perjudicar a pequeños negocios si no se planifica bien.",q:"Welches Ziel wird genannt?",options:[
+"Die Nutzung von Fahrrädern und öffentlichem Verkehr fördern.",
+"Mehr Parkplätze bauen.",
+"Autofahren billiger machen.",
+"Alle Geschäfte schließen."
+],correct:0,note:"fomentar el uso de bicicletas y transporte público."},
+
+{type:"Leseverstehen",mode:"mc",info:"Texto: En muchas ciudades se están reduciendo los espacios para coches con el fin de fomentar el uso de bicicletas y transporte público. Sus defensores argumentan que mejora la calidad del aire, mientras que sus críticos señalan que puede perjudicar a pequeños negocios si no se planifica bien.",q:"Was kritisieren Gegner?",options:[
+"Es kann kleinen Geschäften schaden, wenn es schlecht geplant wird.",
+"Die Luft wird zu sauber.",
+"Es gibt zu viele Fahrräder in Wohnungen.",
+"Der Verkehr wird völlig verschwinden."
+],correct:0,note:"perjudicar a pequeños negocios si no se planifica bien."},
+
+{type:"Leseverstehen",mode:"text",info:"Texto: En muchas ciudades se están reduciendo los espacios para coches...",q:"Schreibe eine ausgewogene Meinung zu autofreien Innenstädten.",a:"Me parece una buena idea si se ofrece una alternativa eficaz. Sin embargo, habría que tener en cuenta a las personas mayores y a los pequeños comercios.",note:"Musterlösung."},
+
+{type:"Bildanalyse",mode:"text",image:"🏙️🚗🚲🌱",cap:"Stadt zwischen Auto und Nachhaltigkeit",q:"Analysiere die Situation in 3 Sätzen mit mindestens einem Konnektor.",a:"La imagen muestra un conflicto entre movilidad y sostenibilidad. Por un lado, los coches son cómodos; por otro lado, contaminan mucho. Por eso, sería importante mejorar el transporte público.",note:"Musterlösung."},
+
+{type:"Bildanalyse",mode:"mc",image:"🧑‍💻🏠☕📈",cap:"Homeoffice",q:"Welche Aussage ist am differenziertesten?",options:[
+"El teletrabajo puede aumentar la flexibilidad, aunque también dificulta separar la vida laboral de la privada.",
+"Teletrabajo casa café bueno.",
+"Trabajar casa siempre perfecto.",
+"No hay problemas nunca."
+],correct:0,note:"B2: Vorteil + Einschränkung."},
+
+{type:"Bildanalyse",mode:"text",image:"🌍🔥💧🌳",cap:"Klimawandel",q:"Formuliere eine Empfehlung mit 'es imprescindible que...'",a:"Es imprescindible que los gobiernos tomen medidas más ambiciosas contra el cambio climático.",note:"Musterlösung."},
+
+{type:"Bildanalyse",mode:"mc",image:"🎓🤖📚💬",cap:"KI und Lernen",q:"Welche Aussage passt zu einer B2-Diskussion?",options:[
+"La inteligencia artificial puede apoyar el aprendizaje, siempre que se use de forma crítica.",
+"La IA estudiar sí siempre.",
+"Robot libro hablar.",
+"No tiene sentido pensar."
+],correct:0,note:"Nuancierte Formulierung."},
+
+{type:"Idiomatik",mode:"mc",q:"Was bedeutet 'estar hasta las narices'?",options:[
+"die Nase voll haben",
+"sehr gut riechen",
+"krank sein",
+"sehr neugierig sein"
+],correct:0,note:"Umgangssprachlich: genervt sein / die Nase voll haben."},
+
+{type:"Idiomatik",mode:"mc",q:"Was bedeutet 'dar en el clavo'?",options:[
+"ins Schwarze treffen",
+"einen Nagel kaufen",
+"sich verletzen",
+"zu spät kommen"
+],correct:0,note:"dar en el clavo = genau richtig liegen."},
+
+{type:"Idiomatik",mode:"mc",q:"Was bedeutet 'no tener pelos en la lengua'?",options:[
+"kein Blatt vor den Mund nehmen",
+"schlecht sprechen",
+"leise sprechen",
+"eine Fremdsprache vergessen"
+],correct:0,note:"direkt/offen sprechen."},
+
+{type:"Idiomatik",mode:"text",q:"Schreibe einen kurzen Satz mit 'me pone de los nervios'.",a:"Me pone de los nervios que la gente llegue tarde sin avisar.",note:"Musterlösung."},
+
+{type:"Register & Stil",mode:"mc",q:"Welche Version ist formeller?",options:[
+"Le agradecería que me enviara la información lo antes posible.",
+"Mándame eso ya.",
+"Oye, pásame la info.",
+"Dame la cosa rápido."
+],correct:0,note:"Formeller Brief-/E-Mail-Stil."},
+
+{type:"Register & Stil",mode:"text",q:"Formuliere höflicher: 'No puedo ir.'",a:"Lamentablemente, no podré asistir.",note:"Musterlösung."},
+
+{type:"Register & Stil",mode:"mc",q:"Welche Einleitung passt zu einer formellen Beschwerde?",options:[
+"Me dirijo a ustedes para expresar mi descontento con el servicio recibido.",
+"Hola tío, fatal todo.",
+"Qué desastre, colega.",
+"Oye, mira esto."
+],correct:0,note:"Formelle Beschwerde."},
+
+{type:"Register & Stil",mode:"text",q:"Schreibe einen formellen Satz, um eine Rückerstattung zu verlangen.",a:"Solicito la devolución del importe abonado.",note:"Musterlösung."},
+
+{type:"Medien & Gesellschaft",mode:"mc",q:"Welche Aussage ist am natürlichsten?",options:[
+"Los titulares sensacionalistas pueden manipular la percepción del lector.",
+"Titulares muy wow gente.",
+"Leer periódico siempre verdad.",
+"Internet noticia bonito."
+],correct:0,note:"B2-Wortschatz: titulares, sensacionalistas, manipular, percepción."},
+
+{type:"Medien & Gesellschaft",mode:"text",q:"Schreibe 3 Sätze über Vor- und Nachteile von Nachrichten in sozialen Medien.",a:"Las redes sociales permiten informarse rápidamente. Sin embargo, también facilitan la difusión de noticias falsas. Por eso conviene comprobar las fuentes.",note:"Musterlösung."},
+
+{type:"Medien & Gesellschaft",mode:"mc",q:"Was bedeutet 'noticias falsas'?",options:[
+"Fake News",
+"gute Nachrichten",
+"alte Nachrichten",
+"Sportnachrichten"
+],correct:0,note:"noticias falsas = Fake News."},
+
+{type:"Medien & Gesellschaft",mode:"text",q:"Schreibe einen Rat: Wie kann man Informationen im Internet prüfen?",a:"Es recomendable comparar varias fuentes y comprobar quién ha publicado la información.",note:"Musterlösung."},
+
+{type:"Fehlerkorrektur",mode:"text",q:"Korrigiere: Si tendría más dinero, viajaría más.",a:"Si tuviera más dinero, viajaría más.",note:"Si + imperfecto de subjuntivo, condicional."},
+
+{type:"Fehlerkorrektur",mode:"text",q:"Korrigiere: Es importante que la gente recicla más.",a:"Es importante que la gente recicle más.",note:"Es importante que + subjuntivo."},
+
+{type:"Fehlerkorrektur",mode:"text",q:"Korrigiere: Aunque llueve mañana, iremos.",a:"Aunque llueva mañana, iremos.",note:"Zukunft/Unsicherheit → subjuntivo."},
+
+{type:"Fehlerkorrektur",mode:"mc",q:"Welche Version ist korrekt?",options:[
+"Me habría gustado que me avisaras antes.",
+"Me habría gustado que me avisas antes.",
+"Me hubiera gusta que avisar antes.",
+"Me gustaría que avisaste antes."
+],correct:0,note:"Me habría gustado que + imperfecto de subjuntivo."},
+
+{type:"Kreative Produktion",mode:"text",q:"Schreibe eine kurze Stellungnahme: Sollte man eine Vier-Tage-Woche einführen?",a:"Desde mi punto de vista, una semana laboral de cuatro días podría mejorar la calidad de vida. No obstante, habría que organizar bien el trabajo para que no aumente la presión.",note:"Musterlösung."},
+
+{type:"Kreative Produktion",mode:"text",q:"Schreibe eine formelle E-Mail-Einleitung wegen einer Reklamation.",a:"Estimados señores: Me pongo en contacto con ustedes para reclamar un problema relacionado con mi pedido.",note:"Musterlösung."},
+
+{type:"Kreative Produktion",mode:"text",q:"Schreibe eine Hypothese über die Zukunft des Lernens.",a:"Es probable que en el futuro aprendamos más con herramientas digitales, aunque los profesores seguirán siendo importantes.",note:"Musterlösung."},
+
+{type:"Kreative Produktion",mode:"text",q:"Schreibe 3 Sätze über ein gesellschaftliches Problem und eine mögliche Lösung.",a:"Uno de los grandes problemas actuales es la falta de vivienda asequible. Para solucionarlo, los gobiernos deberían construir más viviendas sociales. Además, habría que regular mejor los alquileres.",note:"Musterlösung."}
+];
+
+let current=0,score=0,answered=false,review=[];
+
+function startQuiz(){
+ document.getElementById("start").classList.add("hidden");
+ document.getElementById("quiz").classList.remove("hidden");
+ render();
+}
+function restartQuiz(){
+ current=0;score=0;answered=false;review=[];
+ document.getElementById("result").classList.add("hidden");
+ document.getElementById("quiz").classList.remove("hidden");
+ render();
+}
+function normalize(s){
+ return String(s||"").trim().toLowerCase()
+ .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+ .replace(/[¿?¡!.,;]/g,"")
+ .replace(/\s+/g," ");
+}
+function render(){
+ answered=false;
+ const q=questions[current];
+ document.getElementById("counter").textContent=`Frage ${current+1} / ${questions.length}`;
+ document.getElementById("score").textContent=score;
+ document.getElementById("bar").style.width=`${(current/questions.length)*100}%`;
+ document.getElementById("task").textContent=q.type;
+ document.getElementById("question").textContent=q.q;
+ document.getElementById("feedback").className="feedback";
+ document.getElementById("feedback").textContent="";
+
+ const info=document.getElementById("info");
+ if(q.info){info.classList.remove("hidden");info.textContent=q.info;}
+ else{info.classList.add("hidden");info.textContent="";}
+
+ const img=document.getElementById("image");
+ if(q.image){
+   img.classList.remove("hidden");
+   img.innerHTML=`<div><div class="scene">${q.image}</div><div class="caption">${q.cap||""}</div></div>`;
+ } else {
+   img.classList.add("hidden");
+   img.innerHTML="";
+ }
+
+ const c=document.getElementById("content");
+ if(q.mode==="mc"){
+   c.innerHTML=`<div class="answers">${q.options.map((o,i)=>`
+   <button class="answer" onclick="choose(${i})">${String.fromCharCode(65+i)}) ${o}</button>
+   `).join("")}</div>`;
+ }
+ else if(q.mode==="fill"){
+   c.innerHTML=`<input type="text" id="txt" placeholder="Antwort eingeben..."><button class="btn" onclick="checkFill()">Prüfen</button>`;
+ }
+ else{
+   c.innerHTML=`<textarea id="txt" placeholder="Hier schreiben..."></textarea>
+   <button class="btn" onclick="saveOpen()">Als erledigt markieren</button>
+   <p class="subtitle" style="font-size:.95rem">Offene Aufgabe: Lehrkraft entscheidet. Musterlösung kann angezeigt werden.</p>`;
+ }
+}
+
+function choose(i){
+ if(answered)return;
+ answered=true;
+ const q=questions[current];
+ const ok=i===q.correct;
+ if(ok)score++;
+ feedback(ok,ok?"✅ Richtig!":`❌ Nicht ganz. Richtig: ${q.options[q.correct]}`);
+ review.push({n:current+1,q:q.q,ok,note:q.note});
+ document.getElementById("score").textContent=score;
+}
+function checkFill(){
+ if(answered)return;
+ answered=true;
+ const q=questions[current];
+ const val=normalize(document.getElementById("txt").value);
+ const ans=normalize(q.a);
+ const ok=val===ans || val.includes(ans);
+ if(ok)score++;
+ feedback(ok,ok?"✅ Richtig!":`❌ Nicht ganz. Lösung: ${q.a}`);
+ review.push({n:current+1,q:q.q,ok,note:q.note});
+ document.getElementById("score").textContent=score;
+}
+function saveOpen(){
+ if(answered)return;
+ answered=true;
+ feedback(null,"📝 Antwort gespeichert. Vergleiche mit der Musterlösung.");
+ review.push({n:current+1,q:questions[current].q,ok:null,note:questions[current].note});
+}
+function feedback(ok,msg){
+ const f=document.getElementById("feedback");
+ f.className="feedback "+(ok===true?"good":ok===false?"bad":"neutral");
+ f.textContent=msg;
+}
+function showAnswer(){
+ const q=questions[current];
+ const f=document.getElementById("feedback");
+ f.className="feedback neutral";
+ if(q.mode==="mc") f.textContent=`💡 Lösung: ${q.options[q.correct]} — ${q.note}`;
+ else f.textContent=`💡 Musterlösung: ${q.a} — ${q.note}`;
+}
+function nextQuestion(){
+ if(!answered){
+   review.push({n:current+1,q:questions[current].q,ok:null,note:questions[current].note});
+ }
+ current++;
+ if(current>=questions.length) finish();
+ else render();
+}
+function finish(){
+ document.getElementById("quiz").classList.add("hidden");
+ document.getElementById("result").classList.remove("hidden");
+ document.getElementById("finalScore").textContent=score;
+ let txt="Gut gemacht!";
+ if(score>=34) txt="¡Excelente! Starkes B2-Niveau.";
+ else if(score>=26) txt="Sehr gut! Du kannst differenziert argumentieren.";
+ else if(score>=18) txt="Solide. B2-Strukturen weiter festigen.";
+ else txt="Guter Übungsdurchgang. Die offenen Aufgaben am besten gemeinsam besprechen.";
+ document.getElementById("resultText").textContent=txt;
+ document.getElementById("review").innerHTML=
+ "<h2>Auswertung / Lösungen</h2>"+
+ review.map(r=>`
+ <div class="reviewitem">
+ <b>Frage ${r.n}</b> ${r.ok===true?"✅":r.ok===false?"❌":"📝"}<br>
+ ${r.q}<br>
+ <span style="color:#6b7280">${r.note}</span>
+ </div>
+ `).join("");
+}
+</script>
+</body>
+</html>
